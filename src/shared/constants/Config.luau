@@ -190,7 +190,31 @@ local MACHINES: { [Types.MachineId]: Types.Machine } = {
 	},
 }
 
+local RESOURCE_VALUES: { [Types.ResourceId]: number } = {
+	raw_wood = 5,
+	plank = 15,
+	furniture = 50,
+	stone = 8,
+	ore = 25,
+	ingot = 75,
+	tool = 200,
+	wheat = 10,
+	flour = 30,
+	bread = 90,
+	raw_fish = 12,
+	canned_fish = 100,
+	magma_rock = 150,
+	refined_crystal = 500,
+}
+
 Config.ZONES = ZONES
 Config.MACHINES = MACHINES
+Config.RESOURCE_VALUES = RESOURCE_VALUES
+
+Config.REBIRTH = {
+	MIN_COINS_REQUIRED = 50000,
+	KEPT_PROGRESS_RATIO = 0.1,
+	BASE_MULTIPLIER = 0.25,
+}
 
 return Config
