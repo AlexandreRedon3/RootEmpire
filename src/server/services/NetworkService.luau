@@ -19,12 +19,11 @@ local NetworkService = {}
 -- ============================================================
 
 local function respond(player: Player, eventName: string, success: boolean, message: string?, data: any?)
-    RemoteService.fireClient("PlayerDataUpdate" :: any, player, {
-        event = eventName,
-        success = success,
-        message = message,
-        data = data,
-    })
+    -- Ne pas utiliser PlayerDataUpdate pour les réponses — ça écrase les données
+    -- Pour l'instant on log juste côté serveur
+    if not success then
+        warn("[NetworkService]", eventName, "échoué pour", player.Name, ":", message)
+    end
 end
 
 -- ============================================================
@@ -55,13 +54,14 @@ local function handleStopMachine(player: Player, machineId: any)
 end
 
 local function handleCollectOutput(player: Player, machineId: any)
-    local success, err, coinsEarned = ProductionService.collectOutput(player, machineId)
-    respond(player, "CollectOutput", success, err, { coins = coinsEarned })
+    local success, err, amount = ProductionService.collectOutput(player, machineId)
+    respond(player, "CollectOutput", success, err, { amount = amount })
 
     if success then
         local data = PlayerService.getData(player)
         if data then
-            RemoteService.fireClient("CoinsUpdate", player, data.coins)
+            -- Envoyer les données complètes — coins ET ressources mis à jour
+            RemoteService.fireClient("PlayerDataUpdate", player, data)
         end
     end
 end
@@ -69,6 +69,13 @@ end
 local function handleAddInputStock(player: Player, machineId: any, amount: number)
     local success, err = ProductionService.addInputStock(player, machineId, amount)
     respond(player, "AddInputStock", success, err)
+
+    if success then
+        local data = PlayerService.getData(player)
+        if data then
+            RemoteService.fireClient("PlayerDataUpdate", player, data)
+        end
+    end
 end
 
 local function handleUnlockZone(player: Player, zoneId: any)

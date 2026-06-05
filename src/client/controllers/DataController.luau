@@ -54,7 +54,9 @@ function DataController.init()
     RemoteService.init()
 
     -- Recevoir les données joueur
-    RemoteService.onClientEvent("PlayerDataUpdate", function(data: Types.PlayerData)
+    RemoteService.onClientEvent("PlayerDataUpdate", function(data: any)
+        if data.event then return end
+
         playerData = data
         for _, callback in ipairs(onDataUpdateCallbacks) do
             task.spawn(callback, data)

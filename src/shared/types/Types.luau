@@ -57,6 +57,7 @@ export type PlayerData = {
     coins: number,
     rebirths: number,
     multiplier: number,
+    resources: { [ResourceId]: number },  -- ← ajout
     unlockedZones: { ZoneId },
     ownedMachines: { [MachineId]: MachineState },
     stats: {

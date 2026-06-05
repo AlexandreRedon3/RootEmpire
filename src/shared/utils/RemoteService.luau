@@ -16,6 +16,11 @@ type RemoteEventName =
     "CoinsUpdate" |         -- Serveur → Client : mise à jour des coins
     "PlayerDataUpdate" |    -- Serveur → Client : données joueur complètes
 
+    -- Slots
+    "SlotAssigned" |        -- Serveur → Client : slot attribué au joueur
+    "SlotReleased" |        -- Serveur → Client : slot libéré
+    "SlotsStateUpdate" |    -- Serveur → Client : état complet des slots
+
     -- Actions client → serveur
     "BuyMachine" |          -- Client → Serveur
     "StartMachine" |        -- Client → Serveur
@@ -27,7 +32,8 @@ type RemoteEventName =
 
 type RemoteFunctionName =
     "GetPlayerData" |       -- Client demande ses données
-    "GetConfig"             -- Client demande la config
+    "GetConfig" |           -- Client demande la config
+    "GetSlotsState"         -- Client demande l'état des slots
 
 -- ============================================================
 -- SETUP
@@ -84,6 +90,9 @@ function RemoteService.init()
             "MachineUpdate",
             "CoinsUpdate",
             "PlayerDataUpdate",
+            "SlotAssigned",
+            "SlotReleased",
+            "SlotsStateUpdate",
             "BuyMachine",
             "StartMachine",
             "StopMachine",
@@ -101,6 +110,7 @@ function RemoteService.init()
         local functions: { RemoteFunctionName } = {
             "GetPlayerData",
             "GetConfig",
+            "GetSlotsState",
         }
 
         for _, name in ipairs(functions) do

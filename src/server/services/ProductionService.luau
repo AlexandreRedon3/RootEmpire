@@ -4,9 +4,11 @@
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+
 local Types = require(ReplicatedStorage.types.Types)
 local Config = require(ReplicatedStorage.constants.Config)
 local PlayerService = require(script.Parent.PlayerService)
+local DataService = require(script.Parent.Parent.data.DataService)
 
 -- ============================================================
 -- SETUP
@@ -48,7 +50,7 @@ local function notifyProductionUpdate(player: Player, machineId: Types.MachineId
     end
 end
 
-local function notifyCoinsUpdate(player: Player, coins: number)
+local function _notifyCoinsUpdate(player: Player, coins: number)
     for _, callback in ipairs(onCoinsUpdateCallbacks) do
         task.spawn(function()
             callback(player, coins)
@@ -224,10 +226,24 @@ function ProductionService.addInputStock(player: Player, machineId: Types.Machin
     local machineState = data.ownedMachines[machineId]
     if not machineState then return false, "Machine non possédée" end
 
+    local machineConfig = Config.MACHINES[machineId]
+    if not machineConfig then return false, "Machine invalide" end
+
+    -- Vérifier si le joueur a assez de la ressource input
+    local hasEnough = DataService.hasResource(player, machineConfig.input, amount)
+    if not hasEnough then
+        return false, "Pas assez de " .. machineConfig.input .. " dans l'inventaire"
+    end
+
+    -- Consommer depuis l'inventaire
+    DataService.removeResource(player, machineConfig.input, amount)
+
+    -- Ajouter dans le stock de la machine
     PlayerService.updateData(player, function(d)
         d.ownedMachines[machineId].inputStock += amount
     end)
 
+    print("[ProductionService]", player.Name, "a chargé", amount, machineConfig.input, "dans", machineId)
     return true, nil
 end
 
@@ -244,24 +260,25 @@ function ProductionService.collectOutput(player: Player, machineId: Types.Machin
     end
 
     local machineConfig = Config.MACHINES[machineId]
-    if not machineConfig then
-        return false, "Machine invalide", nil
-    end
+    if not machineConfig then return false, "Machine invalide", nil end
 
-    local resourceValue = Config.RESOURCE_VALUES[machineConfig.output] or 0
-    local coinsEarned = machineState.outputStock * resourceValue * data.multiplier
+    local amount = machineState.outputStock
 
-    coinsEarned = math.floor(coinsEarned)
-
+    -- Vider l'output de la machine
     PlayerService.updateData(player, function(d)
         d.ownedMachines[machineId].outputStock = 0
     end)
 
-    PlayerService.addCoins(player, coinsEarned)
-    notifyCoinsUpdate(player, coinsEarned)
+    -- Ajouter dans l'inventaire ressources du joueur
+    DataService.addResource(player, machineConfig.output, amount)
 
-    print("[ProductionService]", player.Name, "a collecté", coinsEarned, "coins depuis", machineId)
-    return true, nil, coinsEarned
+    -- Mettre à jour les stats
+    PlayerService.updateData(player, function(d)
+        d.stats.totalProduced += amount
+    end)
+
+    print("[ProductionService]", player.Name, "a collecté", amount, machineConfig.output, "depuis", machineId)
+    return true, nil, amount
 end
 
 -- ============================================================
